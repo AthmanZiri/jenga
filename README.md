@@ -18,8 +18,19 @@
 * Run `python manage.py runserver`
 
 ### Setup using Docker ###
-* Make sure you have docker and docker-compose installed
-* clone repository to your local / production server
+* Make sure you have docker (https://docs.docker.com/install/linux/docker-ce/ubuntu/) and docker-compose installed
+
+STEPS TO INSTALL Docker-compose:
+* apt install jq -y
+* VERSION=$(curl --silent https://api.github.com/repos/docker/compose/releases/latest | jq .name -r)
+* DESTINATION=/usr/bin/docker-compose
+* sudo curl -L https://github.com/docker/compose/releases/download/${VERSION}/docker-compose-$(uname -s)-$(uname -m) -o $DESTINATION
+* sudo chmod 755 $DESTINATION
+
+GET STARTED
+* git clone https://github.com/AthmanZiri/jenga.git
+* cd jenga
+* create local_settings.py and add this line from jenga.settings import *
 * docker-compose -f docker-compose.prod.yaml up -d --build
 * docker-compose -f docker-compose.prod.yaml exec web python manage.py migrate --noinput
 * docker-compose -f docker-compose.prod.yaml exec web python manage.py createsuperuser
