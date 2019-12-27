@@ -39,6 +39,7 @@ def contact_create(request):
                 messages.error(request, "Contact with that phone number Already Exists")
             else:
                 contact.save()
+                form.save_m2m()
                 messages.success(request, "Contact Successfully Created")
                 return redirect('contact_create')
     else:

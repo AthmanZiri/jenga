@@ -4,7 +4,7 @@ staticfiles
 .env
 db.sqlite3
 .idea
-jenga/local_settings.py
+app/jenga/local_settings.py
 .vscode
 
 # Elastic Beanstalk Files

@@ -1,0 +1,10 @@
+africastalking==1.1.6
+Django==2.2.6
+dj-database-url
+django-filter
+django-heroku
+django-import-export
+gunicorn==19.9.0
+psycopg2
+psycopg2-binary==2.8.3
+pytz==2019.2

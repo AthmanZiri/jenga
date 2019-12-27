@@ -17,6 +17,19 @@
 * Run `python manage.py migrate`
 * Run `python manage.py runserver`
 
+### Setup using Docker ###
+* Make sure you have docker and docker-compose installed
+* clone repository to your local / production server
+* docker-compose -f docker-compose.prod.yaml up -d --build
+* docker-compose -f docker-compose.prod.yaml exec web python manage.py migrate --noinput
+* docker-compose -f docker-compose.prod.yaml exec web python manage.py createsuperuser
+
+you should be able to see the app running on http://<ip-address>
+
+you can run the following 
+* docker ps  # list containers created. they should be running
+* docker images  # list images created 
+
 ### To Do List ###
 
 * Project documentation

@@ -1,0 +1,25 @@
+version: '3.7'
+
+services:
+  web:
+    build: ./app
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - ./app/:/usr/src/app/
+    ports:
+      - 8001:8000
+    env_file:
+      - ./.env.dev
+    depends_on:
+      - db
+  db:
+    image: postgres:12.0-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_USER=jenga_io
+      - POSTGRES_PASSWORD=jenga_io
+      - POSTGRES_DB=jenga_io_dev
+
+volumes:
+  postgres_data:

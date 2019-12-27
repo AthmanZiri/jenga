@@ -36,3 +36,4 @@ class ContactForm(forms.ModelForm):
 
 class UploadFileForm(forms.Form):
     file = forms.FileField()
+

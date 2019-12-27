@@ -1,3 +1,4 @@
+import africastalking
 import random
 import logging
 
@@ -6,7 +7,6 @@ from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from contacts.models import Contact, Contact_Group
-from .AfricasTalkingGateway import AfricasTalkingGateway, AfricasTalkingGatewayException
 from .forms import SmsForm
 from .models import Sms
 
@@ -22,40 +22,45 @@ def sms_create(request):
     if request.method == 'POST':
         form = SmsForm(request.user, request.POST)
         username = request.user.profile.africastalking_username
-        apikey = request.user.profile.africastalking_api_key
+        api_key = request.user.profile.africastalking_api_key
         sender = request.user.profile.africastalking_sender_id
-        gateway = AfricasTalkingGateway(username, apikey)
         bulkSMSMode = 1
         enqueue = 1
+        africastalking.initialize(username, api_key)
+        # Initialize SMS service 
+        sms = africastalking.SMS
 
         if form.is_valid():
             category = form.cleaned_data['category']
             message = form.cleaned_data['message']
 
             category_name = Contact_Group.objects.filter(id__in=category)
+            contacts = []
             for item in category_name:
                 category_id = item.id
                 recipients = Contact.objects.values_list(
                     'mobile', flat=True).filter(category=category_id).distinct().order_by()
-                to = ",".join(recipients)
+                mobiles = ",".join(recipients)
+                contacts.append(recipients)
+            
+            flat_list = []
+            for sublist in contacts:
+                for item in sublist:
+                    flat_list.append(item)
+            to = list(set(flat_list))
+            results = sms.send(message, to, sender, enqueue)
 
-                try:
-                    results = gateway.sendMessage(to, message, sender, bulkSMSMode, enqueue)
-                    print(username)
-                    for recipient in results:
-                        user = request.user
-                        message = message
-                        number = recipient['number']
-                        messageId = recipient['messageId']
-                        status = recipient['status']
-                        cost = recipient['cost']
-                        instance = Sms.objects.create(user=user,
-                                        message=message, number=number,
-                                        messageId=messageId, status=status, cost=cost)
-                        instance.category.set(category_name)
-                except AfricasTalkingGatewayException as e:
-                    messages.warning(request, 'Encountered an error while sending message')
-                    logging.ERROR('Encountered an error while sending: {}'.format(e))
+            for recipient in results.get('SMSMessageData')['Recipients']:
+                user = request.user
+                message = message
+                number = recipient['number']
+                messageId = recipient['messageId']
+                status = recipient['status']
+                cost = recipient['cost']
+                instance = Sms.objects.create(user=user,
+                                message=message, number=number,
+                                messageId=messageId, status=status, cost=cost)
+                instance.category.set(category_name)
             messages.success(request, "Message Successfully delivered.")
     else:
         form = SmsForm(request.user)

@@ -21,7 +21,10 @@
                 {% if sms_list %}
                 {% for sms in sms_list %}
                     <tr>
-                        <td> {{ sms.category }} <br>
+                        <td> 
+                            {% for categ in sms.category.all %}
+                                {{ categ }},
+                            {% endfor %}</td>
                         <td> {{ sms.number }} <br>
                         <td> {{ sms.message}} </td>
                         <td> {{ sms.status }} <br>

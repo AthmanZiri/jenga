@@ -28,7 +28,10 @@
                             <tr>
                                 <td> {{ contact.full_name }}</td>
                                 <td> {{ contact.mobile }}</td>
-                                <td> {{ contact.category }}</td>
+                                <td> 
+                                    {% for cont in contact.category.all %}
+                                        {{ cont }},
+                                    {% endfor %}</td>
                                 
                                 <td style="">
                                     <a class="btn btn-warning btn-xs btn-round" href="{% url 'contact_update' contact.id %}"><i class="fa fa-edit"></i>Edit</a>
