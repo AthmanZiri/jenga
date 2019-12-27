@@ -34,12 +34,15 @@ GET STARTED
 * docker-compose -f docker-compose.prod.yaml up -d --build
 * docker-compose -f docker-compose.prod.yaml exec web python manage.py migrate --noinput
 * docker-compose -f docker-compose.prod.yaml exec web python manage.py createsuperuser
+* docker-compose -f docker-compose.prod.yaml exec web python manage.py collectstatic --no-input --clear
 
 you should be able to see the app running on http://<ip-address>
 
-you can run the following 
+you can run the following to troubleshoot
 * docker ps  # list containers created. they should be running
 * docker images  # list images created 
+* docker-compose logs -f # check logs
+* docker-compose exec db psql --username=jenga_io --dbname=jenga_io_prod  # log into database and check if all tables have been created
 
 ### To Do List ###
 
