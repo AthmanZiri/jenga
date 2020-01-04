@@ -9,6 +9,7 @@ from django.contrib import messages
 from contacts.models import Contact, Contact_Group
 from .forms import SmsForm
 from .models import Sms
+from .AfricasTalkingGateway import AfricasTalkingGateway, AfricasTalkingGatewayException
 
 
 @login_required
@@ -26,42 +27,46 @@ def sms_create(request):
         sender = request.user.profile.africastalking_sender_id
         bulkSMSMode = 1
         enqueue = 1
-        africastalking.initialize(username, api_key)
-        # Initialize SMS service 
-        sms = africastalking.SMS
+        
+        if api_key:
+            africastalking.initialize(username, api_key)
+            # Initialize SMS service 
+            sms = africastalking.SMS
 
-        if form.is_valid():
-            category = form.cleaned_data['category']
-            message = form.cleaned_data['message']
+            if form.is_valid():
+                category = form.cleaned_data['category']
+                message = form.cleaned_data['message']
 
-            category_name = Contact_Group.objects.filter(id__in=category)
-            contacts = []
-            for item in category_name:
-                category_id = item.id
-                recipients = Contact.objects.values_list(
-                    'mobile', flat=True).filter(category=category_id).distinct().order_by()
-                mobiles = ",".join(recipients)
-                contacts.append(recipients)
-            
-            flat_list = []
-            for sublist in contacts:
-                for item in sublist:
-                    flat_list.append(item)
-            to = list(set(flat_list))
-            results = sms.send(message, to, sender, enqueue)
+                category_name = Contact_Group.objects.filter(id__in=category)
+                contacts = []
+                for item in category_name:
+                    category_id = item.id
+                    recipients = Contact.objects.values_list(
+                        'mobile', flat=True).filter(category=category_id).distinct().order_by()
+                    mobiles = ",".join(recipients)
+                    contacts.append(recipients)
+                
+                flat_list = []
+                for sublist in contacts:
+                    for item in sublist:
+                        flat_list.append(item)
+                to = list(set(flat_list))
+                results = sms.send(message, to, sender, enqueue)
 
-            for recipient in results.get('SMSMessageData')['Recipients']:
-                user = request.user
-                message = message
-                number = recipient['number']
-                messageId = recipient['messageId']
-                status = recipient['status']
-                cost = recipient['cost']
-                instance = Sms.objects.create(user=user,
-                                message=message, number=number,
-                                messageId=messageId, status=status, cost=cost)
-                instance.category.set(category_name)
-            messages.success(request, "Message Successfully delivered.")
+                for recipient in results.get('SMSMessageData')['Recipients']:
+                    user = request.user
+                    message = message
+                    number = recipient['number']
+                    messageId = recipient['messageId']
+                    status = recipient['status']
+                    cost = recipient['cost']
+                    instance = Sms.objects.create(user=user,
+                                    message=message, number=number,
+                                    messageId=messageId, status=status, cost=cost)
+                    instance.category.set(category_name)
+                messages.success(request, "Message Successfully delivered.")
+            else:
+                messages.error(request, u'Hi there! Please provide an API_KEY in you profile')
     else:
         form = SmsForm(request.user)
     return render(request, 'msgs/sms_create.html', {'form': form})
@@ -73,6 +78,7 @@ def sms_fetch(request, template_name='msgs/fetch_messages.html'):
     username = request.user.profile.africastalking_username
     apikey = request.user.profile.africastalking_api_key
     gateway = AfricasTalkingGateway(username, apikey)
+    
     while True:
         messages = gateway.fetchMessages(last_received_id)
         for message in messages:
@@ -89,11 +95,13 @@ def sms_fetch(request, template_name='msgs/fetch_messages.html'):
 @login_required
 def user_balance(request):
     username = request.user.profile.africastalking_username
-    apikey = request.user.profile.africastalking_api_key
-    gateway = AfricasTalkingGateway(username, apikey)
-    try:
-        user = gateway.getUserData()
-        balance = user['balance']
+    api_key = request.user.profile.africastalking_api_key
+    if api_key == None:
+        messages.error(request, u'Hi there! Please provide an API_KEY in you profile')
+    else:
+        africastalking.initialize(username, api_key)
+        app = africastalking.Application
+        bal = app.fetch_application_data()
+        balance = bal["UserData"]["balance"]
         return render(request, 'msgs/balance.html', {'object': balance})
-    except AfricasTalkingGatewayException as e:
-        print('Error: %s') % str(e)
+    
