@@ -1,5 +1,5 @@
 africastalking==1.1.6
-Django==2.2.6
+Django==2.2.20
 dj-database-url
 django-filter
 django-heroku
